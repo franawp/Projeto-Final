@@ -62,7 +62,7 @@ class Routes {
     private rootPage (req:Request, res:Response) {
         const data = Database;
         //data.insertExemplo();
-        data.buscarPorNome();
+        //data.buscarPorNome();
         res.send("Seja Welcomido ao site");
     }
 

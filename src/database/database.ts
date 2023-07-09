@@ -1,52 +1,21 @@
 import mongoose, {Model, Document} from 'mongoose';
+import * as Usuario from './userDatabase';
+import * as Livro from './bookDatabase';
 
-interface ExemploDocument extends Document {
-    campo1: string;
-    campo2: number;
-}
-
-interface Livro extends Document {
-    nome:       string;
-    ISBN:       number;
-    autor:      string;
-    /* adicionar demais atributos */
-}
-
-interface Usuario extends Document {
-    nome:       string;
-    email:      string;
-    password:   string;
-    /* adicionar demais atributos */
-}
-
-const ExemploModel: Model<ExemploDocument> = mongoose.model<ExemploDocument>('Livros', new mongoose.Schema({
-    campo1: { type: String },
-    campo2: { type: Number }
-}));
-
+/**
+ * Classe com as chamadas de métodos de manipulação no banco de dados
+ */
 class Database {
     private MONGODB_URI: string;
-    private LivroModel: Model<Livro>;
-    private UsuarioModel: Model<Usuario>;
 
     public constructor() {
         this.MONGODB_URI = 'mongodb://localhost:27017/alexandria-db';
-
-        this.LivroModel = mongoose.model<Livro>("livro", new mongoose.Schema({
-            nome: {type: String},
-            ISBN: {type: Number},
-            autor: {type: String},
-        }));
-
-        this.UsuarioModel = mongoose.model<Usuario>("usuarios", new mongoose.Schema({
-            nome: {type: String},
-            email: {type: String},
-            password: {type: String},
-        }));
-    
         this.mongooseConnect();
     }
 
+    /**
+     * Função para realizar a conexão com o Banco de Dados
+     */
     private mongooseConnect ():void {
         mongoose.connect(this.MONGODB_URI)
             .then(() => {
@@ -57,6 +26,9 @@ class Database {
             });
     }
 
+    /**
+     * Função para realizar a desconexão com o Banco de Dados
+     */
     private mongooseDisconnect ():void {
         mongoose.disconnect()
             .then(() => {
@@ -68,49 +40,82 @@ class Database {
     }
 
     /**
-     * Função de inserção do Livro no banco de dados
-     * @param nome      Nome do Livro
-     * @param ISBN      Número do ISBN do Livro
-     * @param autor     Autor do Livro
-     * @returns         Bufer contendo o livro
+     * Funcao para cadastrar o Livro no Banco de Dados
+     * 
+     * @param nome      nome do Livro
+     * @param ISBN      ISBN do Livro
+     * @param autor     autor do Livro
+     * @returns         Reposta sobre a inserção
      */
-    public async inserirLivro(nome: string, ISBN: number, autor: string): Promise<Livro> {
-        try {
-            const livro = new this.LivroModel({ nome, ISBN, autor });
-            const livroSalvo = await livro.save();
-            console.log('Livro inserido com sucesso:', livroSalvo);
-            return livroSalvo;
-        } 
-        
-        catch (error) {
-            console.error('Erro ao inserir Livro:', error);
-            throw error;
+    public async inserirLivro (nome: string, ISBN: number, autor: string): Promise<boolean> {
+        /* Em desenvolvimento */
+        return true;
+    }
+
+    /**
+     * Funcao para cadastrar o usuário 
+     * 
+     * @param name      nome do Usuário
+     * @param email     email do usuário
+     * @param password  senha do usuário
+     * @param root      privilégios do usuário
+     * @returns         Resposta da inserção (true or false)
+     */
+    public async cadastrarUsuario (name: string, email: string, password: string, root: boolean): Promise<boolean> {
+        return Usuario.sigupUser(name, email, password, root);
+    }
+
+    /**
+     * Funcao para logar o usuário
+     * 
+     * @param email     email do Usuário
+     * @param password  senha do Usuário
+     * @returns         nome do Usuário ou mensagem de erro
+     */
+    public async logarUsuario (email: string, password: string): Promise<string> {
+        const respose: Usuario.SiginResponse = await Usuario.siginUser(email,password);
+        const usuarioLogado: boolean = (!!respose.user && !respose.notPassword && !respose.notFind && !respose.error) ;
+        const incorrectPassword: boolean = respose.notPassword;
+
+        if (usuarioLogado) {
+            if (respose.user?.name) {
+                return respose.user.name;
+            }
+
+            else {
+                return "Usuario";
+            }
+        }
+
+        else if (!usuarioLogado && incorrectPassword) {
+            return "Senha inválida";
+        }
+
+        else {
+            return "Usuário não encontrado";
         }
     }
 
-    public async buscarPorNome() {
-        try {
-          const campo1 = "Francisco";
-          const campo2 = 23
-          const dado = await ExemploModel.find({ campo1,campo2 });
-      
-          if (dado) {
-            console.log('Dado encontrado:', dado);
-            return dado;
-          } else {
-            console.log('Dado não encontrado');
-            return null;
-          }
-        } catch (error) {
-          console.error('Erro ao buscar dado:', error);
-          throw error;
-        } finally {
-          // Fechar a conexão ao final da busca
-          await mongoose.disconnect();
-          console.log('Conexão com o MongoDB fechada');
+    /**
+     * Funcao para buscar um Livro
+     * Parâmetros opcionais, pois pode ser usado o nome ou o ISBN para fazer a busca
+     * 
+     * @param nome      nome do Livro
+     * @param ISBN      ISBN do Livro
+     */
+    public async buscarLivro (nome?: string, ISBN?: number): Promise<void | Livro.Book> {
+        if (nome) {
+            /* retorno do livro pelo nome */
         }
-      }
-    
+
+        else if (ISBN) {
+            /* Retornar livro pelo ISBN */
+        }
+
+        else {
+            console.log ("Nenhum parametro passado");
+        }
+    }
 }
 
 export default new Database();

@@ -2,13 +2,8 @@ import mongoose , { Document, Model } from "mongoose"
 
 /**
  * Interface contendo os atributos de um usuário
- * 
- * @property name       Nome do Usuário
- * @property email      Email do Usuário
- * @property password   Senha do Usuário
- * @property root       Permissão do usuário
  */
-interface User extends Document {
+export interface User extends Document {
     name:       string;
     email:      string;
     password:   string;
@@ -16,7 +11,17 @@ interface User extends Document {
 }
 
 /**
- * Modelo do mongoDB para mapear o usuário
+ * Objeto de retorno para a função de logar
+ */
+export interface SiginResponse {
+    user:       null | User,
+    notPassword:boolean,
+    notFind:    boolean,
+    error:      any
+}
+
+/**
+ * Modelo do mongoDB para mapear um usuário
  */
 const UserModel: Model<User> = mongoose.model<User>("users", new mongoose.Schema({
     name: {type: String},
@@ -52,35 +57,52 @@ export async function sigupUser (name: string, email: string, password: string, 
  * 
  * @param email     Email do usuário
  * @param password  Senha do usuário
- * @returns         Dados do usuário ou erro
+ * @returns         Dados do usuário ou uma mensagem de erro
  */
-export async function siginUser (email: string, password: string) {
+export async function siginUser (email: string, password: string): Promise<SiginResponse> {
+    let document: SiginResponse = {
+        "user": null,
+        "notPassword": false,
+        "notFind": false,
+        "error": ""
+    };
+
     try {
         const user = await UserModel.findOne({email});
         
         if (!user) {
             console.log("Usuário não encontrado");
-            return -1;
+            document.notFind = true;
+            return document;
         }
         
         else {
             if (user["password"] == password) {
-                return user;
+                document.user = user;
+                return document;
             }
 
             else {
-                return 0;
+                document.notPassword = true;
+                return document;
             }
         }
     }
     
     catch (error) {
         console.log("Erro ao buscar usuário:", error);
-        throw error;
+        document.error = error;
+        return document;
     }
 }
 
-export async function checkrootUser (email: string) {
+/**
+ * Função para verificar se um usuário é um administrador ou não
+ * 
+ * @param email     email do usuário
+ * @returns         usuário administrador ou não
+ */
+export async function checkrootUser (email: string): Promise<boolean> {
     try {
         const check = await UserModel.findOne({email});
         if(check) {
@@ -100,6 +122,6 @@ export async function checkrootUser (email: string) {
 
     catch (error) {
         console.log("Ocorreu um erro ao tentar a consulta:", error);
-        throw error;
+        return false;
     }
 }
