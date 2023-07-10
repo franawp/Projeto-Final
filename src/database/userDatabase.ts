@@ -30,6 +30,8 @@ const UserModel: Model<User> = mongoose.model<User>("users", new mongoose.Schema
     root: {type: Boolean}
 }));
 
+const secretKey = "alexandria";
+
 /**
  * Função assíncrona para cadastrar usuário no Banco de Dados
  * 
@@ -71,7 +73,6 @@ export async function siginUser (email: string, password: string): Promise<Sigin
         const user = await UserModel.findOne({email});
         
         if (!user) {
-            console.log("Usuário não encontrado");
             document.notFind = true;
             return document;
         }
@@ -95,6 +96,7 @@ export async function siginUser (email: string, password: string): Promise<Sigin
         return document;
     }
 }
+
 
 /**
  * Função para verificar se um usuário é um administrador ou não

@@ -72,27 +72,27 @@ class Database {
      * @param password  senha do Usuário
      * @returns         nome do Usuário ou mensagem de erro
      */
-    public async logarUsuario (email: string, password: string): Promise<string> {
-        const respose: Usuario.SiginResponse = await Usuario.siginUser(email,password);
-        const usuarioLogado: boolean = (!!respose.user && !respose.notPassword && !respose.notFind && !respose.error) ;
-        const incorrectPassword: boolean = respose.notPassword;
+    public async logarUsuario (email: string, password: string) {
+        const response: Usuario.SiginResponse = await Usuario.siginUser(email,password);
+        const usuarioLogado: boolean = (!!response.user && !response.notPassword && !response.notFind && !response.error) ;
+        const incorrectPassword: boolean = response.notPassword;
 
         if (usuarioLogado) {
-            if (respose.user?.name) {
-                return respose.user.name;
+            if (response.user) {
+                return response.user.name;
             }
 
             else {
-                return "Usuario";
+                return "Unknow";
             }
         }
 
         else if (!usuarioLogado && incorrectPassword) {
-            return "Senha inválida";
+            return "password";
         }
 
         else {
-            return "Usuário não encontrado";
+            return "not found";
         }
     }
 

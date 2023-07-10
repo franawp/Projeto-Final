@@ -1,5 +1,7 @@
 import { Router, Response, Request } from 'express';
 import Database from './database/database';
+import addUser from './controllers/addUser';
+import {logUser,Login} from './controllers/logUser';
 
 class Routes {
     private router: Router;
@@ -30,8 +32,8 @@ class Routes {
      */
     private inicializarRotas ():void {
         this.router.get("/", this.rootPage);
-        this.router.post("/login/:signin", this.signIn);
-        this.router.post("/login/:signup", this.signUp);
+        this.router.post("/signin", this.signIn);
+        this.router.post("/signup", this.signUp);
         this.router.get("/home", this.home);
         this.router.get("/minha-biblioteca", this.minhaBiblioteca);
         this.router.get("/home/download", this.enviarArquivo);
@@ -71,9 +73,20 @@ class Routes {
      * @param req 
      * @param res 
      */
-    private signIn (req:Request, res:Response) {
-        console.log("logueeeei", req.body);
-        res.send("Login realizado com sucesso!");
+    private async signIn (req:Request, res:Response): Promise<void> {
+        const {email,password} = req.body;
+        const data = await logUser(email,password);
+        
+        if (data.error != "") {
+            res.status(400).json({error: data.error});
+        }
+        
+        else {
+            res.json({
+                name: data.name, 
+                token: data.token
+            });
+        }
     }
 
     /**
@@ -81,8 +94,16 @@ class Routes {
      * @param req 
      * @param res 
      */
-    private signUp (req:Request, res:Response) {
-        res.send("Cadastro realizado com sucesso");
+    private async signUp (req:Request, res:Response): Promise<void> {
+        const {name,email,password} = req.body;
+        const token = await addUser(name,email,password);
+
+        if (token === "Error") {
+            res.status(400).json({error:"Falha ao cadastrar"})
+        }
+
+        console.log("Token gerado com sucesso:",token)
+        res.json(token);
     }
 
     /**
@@ -91,7 +112,7 @@ class Routes {
      * @param res 
      */
     private home (req:Request, res:Response) {
-        res.send("Seja Welcomido ao site");
+        res.send("Seja Bem-Vindo ao site");
     }
 
     /**
